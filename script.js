@@ -93,7 +93,99 @@ scrollTopBtn.addEventListener('click', () => {
 // =====================
 
 const menuTabs = document.querySelectorAll('.menu-tab');
-const menuItems = document.querySelectorAll('.menu-item');
+const menuGrid = document.getElementById('menuGrid');
+const menuCategories = document.getElementById('menuCategories');
+const menuSection = document.getElementById('menu');
+
+let allMenuItems = [];
+
+// Category image mapping
+const categoryImages = {
+    pizza: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800&h=600&fit=crop&q=80',
+    kebab: 'https://images.unsplash.com/photo-1529006557810-274b9b2fc783?w=800&h=600&fit=crop&q=80',
+    fastfood: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800&h=600&fit=crop&q=80',
+    salad: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800&h=600&fit=crop&q=80',
+    drinks: 'https://images.unsplash.com/photo-1437418747212-8d9709afab22?w=800&h=600&fit=crop&q=80',
+    extras: 'https://images.unsplash.com/photo-1472476443507-c7a5948772fc?w=800&h=600&fit=crop&q=80'
+};
+
+// Load menu data and create menu items
+async function loadMenuData() {
+    try {
+        const response = await fetch('/menu_data.json');
+        const data = await response.json();
+        
+        // Combine all menu items into single array
+        allMenuItems = [
+            ...data.americanPanPizza,
+            ...data.pizzaItalien,
+            ...data.kebab,
+            ...data.fastfood,
+            ...data.salad,
+            ...data.extras,
+            ...data.drinks
+        ];
+        
+        // Create HTML for all menu items
+        createMenuItems(allMenuItems);
+        
+        // Initialize with top3 filter
+        filterMenuItems('top3');
+        
+    } catch (error) {
+        console.error('Error loading menu data:', error);
+        menuGrid.innerHTML = '<p style="text-align: center; padding: 2rem;">Kunne ikke laste menyen. Vennligst prøv igjen senere.</p>';
+    }
+}
+
+// Create menu item HTML
+function createMenuItems(items) {
+    menuGrid.innerHTML = items.map(item => `
+        <div class="menu-item" data-category="${item.category}" data-id="${item.id}" ${item.top3 ? 'data-top3="true"' : ''}>
+            <div class="menu-item-image">
+                <img src="${categoryImages[item.category]}" alt="${item.name}" loading="lazy">
+            </div>
+            <div class="menu-item-content">
+                <h3>${item.name}${item.recommended ? ' <span class="recommended-badge">⭐</span>' : ''}</h3>
+                ${item.description ? `<p>${item.description}</p>` : ''}
+                <div class="menu-item-footer">
+                    <span class="price">${item.price},-</span>
+                    <button class="btn-order">Bestill</button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+    
+    // Re-attach order button listeners
+    attachOrderButtonListeners();
+}
+
+// Function to filter menu items
+function filterMenuItems(category) {
+    const menuItems = document.querySelectorAll('.menu-item');
+    
+    menuItems.forEach(item => {
+        if (category === 'all') {
+            item.classList.remove('hidden');
+            item.classList.add('fade-in');
+        } else if (category === 'top3') {
+            if (item.dataset.top3 === 'true') {
+                item.classList.remove('hidden');
+                item.classList.add('fade-in');
+            } else {
+                item.classList.add('hidden');
+            }
+        } else if (item.dataset.category === category) {
+            item.classList.remove('hidden');
+            item.classList.add('fade-in');
+        } else {
+            item.classList.add('hidden');
+        }
+    });
+}
+
+// Load menu on page load
+loadMenuData();
 
 menuTabs.forEach(tab => {
     tab.addEventListener('click', () => {
@@ -105,35 +197,67 @@ menuTabs.forEach(tab => {
         const category = tab.dataset.category;
         
         // Filter menu items
-        menuItems.forEach(item => {
-            if (category === 'all' || item.dataset.category === category) {
-                item.classList.remove('hidden');
-                item.classList.add('fade-in');
-            } else {
-                item.classList.add('hidden');
-            }
-        });
+        filterMenuItems(category);
     });
+});
+
+// =====================
+// Sticky Menu Categories
+// =====================
+
+let menuCategoriesOffset = null;
+
+// Calculate offsets after page load
+window.addEventListener('load', () => {
+    menuCategoriesOffset = menuCategories.offsetTop;
+});
+
+window.addEventListener('scroll', () => {
+    if (!menuCategoriesOffset) {
+        menuCategoriesOffset = menuCategories.offsetTop;
+    }
+    
+    const menuRect = menuSection.getBoundingClientRect();
+    const scrollY = window.scrollY;
+    const navHeight = 80; // Height of main navbar
+    const categoriesHeight = 60; // Approximate height of categories bar
+    const buffer = 150; // Extra spacing before sticky activates
+    
+    // Make sticky when scrolling past the categories (with buffer)
+    if (scrollY > menuCategoriesOffset - navHeight - buffer) {
+        menuCategories.classList.add('sticky');
+    } else {
+        menuCategories.classList.remove('sticky');
+    }
+    
+    // Hide when scrolling past the menu section
+    if (menuRect.bottom < navHeight + categoriesHeight + 20) {
+        menuCategories.classList.add('hidden');
+    } else {
+        menuCategories.classList.remove('hidden');
+    }
 });
 
 // =====================
 // Order Button Actions
 // =====================
 
-const orderButtons = document.querySelectorAll('.btn-order');
-
-orderButtons.forEach(button => {
-    button.addEventListener('click', (e) => {
-        const menuItem = e.target.closest('.menu-item');
-        const itemName = menuItem.querySelector('h3').textContent;
-        
-        // In a real application, this would open an order modal or redirect to order page
-        // For now, we'll call the restaurant
-        if (confirm(`Ønsker du å bestille ${itemName}?\n\nDu vil bli videreført til å ringe restauranten.`)) {
-            window.location.href = 'tel:33452225';
-        }
+function attachOrderButtonListeners() {
+    const orderButtons = document.querySelectorAll('.btn-order');
+    
+    orderButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+            const menuItem = e.target.closest('.menu-item');
+            const itemName = menuItem.querySelector('h3').textContent;
+            
+            // In a real application, this would open an order modal or redirect to order page
+            // For now, we'll call the restaurant
+            if (confirm(`Ønsker du å bestille ${itemName}?\n\nDu vil bli videreført til å ringe restauranten.`)) {
+                window.location.href = 'tel:33452225';
+            }
+        });
     });
-});
+}
 
 // =====================
 // Load Allergen Data
