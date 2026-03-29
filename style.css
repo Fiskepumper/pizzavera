@@ -106,7 +106,12 @@ a {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: var(--spacing-sm) 0;
+    padding: 1.2rem 0;
+    transition: padding var(--transition-normal);
+}
+
+.navbar.scrolled .nav-wrapper {
+    padding: 0.4rem 0;
 }
 
 .logo {
@@ -115,9 +120,13 @@ a {
 }
 
 .logo-image {
-    height: 50px;
+    height: 90px;
     width: auto;
-    transition: var(--transition-fast);
+    transition: height var(--transition-normal);
+}
+
+.navbar.scrolled .logo-image {
+    height: 45px;
 }
 
 .logo-image:hover {
@@ -369,7 +378,7 @@ section {
 }
 
 .menu {
-    padding-top: calc(var(--spacing-xl) * 1.5);
+    padding-top: calc(var(--spacing-xl) * 2.5);
 }
 
 .section-header {
@@ -463,7 +472,6 @@ section {
 
 .menu-categories.sticky {
     position: fixed;
-    top: 80px;
     left: 0;
     right: 0;
     background: rgba(255, 255, 255, 0.5);

@@ -206,28 +206,36 @@ menuTabs.forEach(tab => {
 // =====================
 
 let menuCategoriesOffset = null;
+const menuCategoriesSpacer = document.getElementById('menuCategoriesSpacer');
 
 // Calculate offsets after page load
 window.addEventListener('load', () => {
-    menuCategoriesOffset = menuCategories.offsetTop;
+    menuCategoriesOffset = menuCategories.getBoundingClientRect().top + window.scrollY;
 });
 
 window.addEventListener('scroll', () => {
     if (!menuCategoriesOffset) {
-        menuCategoriesOffset = menuCategories.offsetTop;
+        menuCategoriesOffset = menuCategories.getBoundingClientRect().top + window.scrollY;
     }
     
     const menuRect = menuSection.getBoundingClientRect();
     const scrollY = window.scrollY;
-    const navHeight = 80; // Height of main navbar
-    const categoriesHeight = 60; // Approximate height of categories bar
-    const buffer = 150; // Extra spacing before sticky activates
+    const navHeight = navbar.offsetHeight;
+    const categoriesHeight = menuCategories.offsetHeight || 60;
     
-    // Make sticky when scrolling past the categories (with buffer)
-    if (scrollY > menuCategoriesOffset - navHeight - buffer) {
-        menuCategories.classList.add('sticky');
+    // Make sticky when scrolling past the categories
+    if (scrollY > menuCategoriesOffset - navHeight) {
+        if (!menuCategories.classList.contains('sticky')) {
+            menuCategoriesSpacer.style.height = categoriesHeight + 'px';
+            menuCategoriesSpacer.style.display = 'block';
+            menuCategories.style.top = navHeight + 'px';
+            menuCategories.classList.add('sticky');
+        }
     } else {
-        menuCategories.classList.remove('sticky');
+        if (menuCategories.classList.contains('sticky')) {
+            menuCategoriesSpacer.style.display = 'none';
+            menuCategories.classList.remove('sticky');
+        }
     }
     
     // Hide when scrolling past the menu section
