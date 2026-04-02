@@ -1132,6 +1132,7 @@ section {
     }
     
     .nav-menu {
+        display: none;
         position: fixed;
         top: 70px;
         left: 0;
@@ -1141,13 +1142,10 @@ section {
         align-items: flex-start;
         padding: var(--spacing-md);
         box-shadow: var(--shadow-lg);
-        max-height: 0;
-        overflow: hidden;
-        transition: var(--transition-normal);
     }
     
     .nav-menu.active {
-        max-height: 500px;
+        display: flex;
     }
     
     .hero-buttons {
